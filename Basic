@@ -1,0 +1,132 @@
+
+
+
+# Debian Outbound Application-Default Rule
+set rulebase security rules Debian-Outbound-AppDefault from Internal to External source 172.20.240.20 destination any action allow service application-default
+set rulebase security rules Debian-Outbound-AppDefault application dns-base
+set rulebase security rules Debian-Outbound-AppDefault application ntp-base
+set rulebase security rules Debian-Outbound-AppDefault application web-browsing
+set rulebase security rules Debian-Outbound-AppDefault application ssl
+set rulebase security rules Debian-Outbound-AppDefault log-start yes log-end yes
+# Debian Inbound Application-Default Rule
+set rulebase security rules Debian-Inbound-AppDefault from External to Internal source any destination 172.20.240.20 action allow service application-default
+set rulebase security rules Debian-Inbound-AppDefault application dns-base
+set rulebase security rules Debian-Inbound-AppDefault application ntp-base
+set rulebase security rules Debian-Inbound-AppDefault application web-browsing
+set rulebase security rules Debian-Inbound-AppDefault application ssl
+set rulebase security rules Debian-Inbound-AppDefault log-start yes log-end yes
+
+# Ecom Outbound Application-Default Rule
+set rulebase security rules User-Outbound-AppDefault from User to External source 172.20.242.10 destination any action allow service application-default
+set rulebase security rules User-Outbound-AppDefault application dns-base
+set rulebase security rules User-Outbound-AppDefault application ntp-base
+set rulebase security rules User-Outbound-AppDefault application web-browsing
+set rulebase security rules User-Outbound-AppDefault application ssl
+set rulebase security rules User-Outbound-AppDefault log-start yes log-end yes
+# Ecom Inbound Application-Default Rule
+set rulebase security rules User-Inbound-AppDefault from External to User source any destination 172.20.242.10 action allow service application-default
+set rulebase security rules User-Inbound-AppDefault application dns-base
+set rulebase security rules User-Inbound-AppDefault application ntp-base
+set rulebase security rules User-Inbound-AppDefault application web-browsing
+set rulebase security rules User-Inbound-AppDefault application ssl
+set rulebase security rules User-Inbound-AppDefault log-start yes log-end yes
+
+# AD Outbound Application-Default Rule
+set rulebase security rules AD-Outbound-AppDefault from User to External source 172.20.242.200 destination any action allow service application-default
+set rulebase security rules AD-Outbound-AppDefault application dns-base
+set rulebase security rules AD-Outbound-AppDefault application ntp-base
+set rulebase security rules AD-Outbound-AppDefault application web-browsing
+set rulebase security rules AD-Outbound-AppDefault application ssl
+set rulebase security rules AD-Outbound-AppDefault application ldap
+set rulebase security rules AD-Outbound-AppDefault log-start yes log-end yes
+# AD Inbound Application-Default Rule
+set rulebase security rules AD-Inbound-AppDefault from External to User source any destination 172.20.242.200 action allow service application-default
+set rulebase security rules AD-Inbound-AppDefault application dns-base
+set rulebase security rules AD-Inbound-AppDefault application ntp-base
+set rulebase security rules AD-Inbound-AppDefault application web-browsing
+set rulebase security rules AD-Inbound-AppDefault application ssl
+set rulebase security rules AD-Inbound-AppDefault log-start yes log-end yes
+
+# Create WebMail-Inbound Rule
+set rulebase security rules WebMail-Inbound from External to Public source any destination 172.20.241.40 action allow service application-default
+set rulebase security rules WebMail-Inbound application dns-base
+set rulebase security rules WebMail-Inbound application smtp
+set rulebase security rules WebMail-Inbound application pop3
+set rulebase security rules WebMail-Inbound application imap
+set rulebase security rules WebMail-Inbound application web-browsing
+set rulebase security rules WebMail-Inbound application ssl
+set rulebase security rules WebMail-Inbound application ntp-base
+#set rulebase security rules WebMail-Inbound application mysql
+set rulebase security rules WebMail-Inbound log-start yes log-end yes
+# Create WebMail-Outbound Rule
+set rulebase security rules WebMail-Outbound from Public to External source 172.20.241.40 destination any action allow service application-default
+# Add Predefined Applications
+set rulebase security rules WebMail-Outbound application dns-base
+set rulebase security rules WebMail-Outbound application ntp-base
+set rulebase security rules WebMail-Outbound application smtp
+set rulebase security rules WebMail-Outbound application imap
+set rulebase security rules WebMail-Outbound application pop3
+set rulebase security rules WebMail-Outbound application web-browsing
+set rulebase security rules WebMail-Outbound application ssl
+#set rulebase security rules WebMail-Outbound application mysql
+set rulebase security rules WebMail-Outbound log-start yes log-end yes
+
+# Splunk set up and logging
+set rulebase security rules Splunk-Outbound from Public to External source 172.20.241.20 destination any action allow service application-default log-start yes log-end yes
+set rulebase security rules Splunk-Outbound application splunk
+set rulebase security rules Splunk-Outbound application web-browsing
+set rulebase security rules Splunk-Outbound application ssl
+set rulebase security rules Splunk-Outbound application dns-base
+set rulebase security rules Splunk-Outbound application ntp-base
+# Splunk Inbound - App-ID Rule
+set rulebase security rules Splunk-Inbound from External to Public source any destination 172.20.241.20 action allow service application-default log-start yes log-end yes
+set rulebase security rules Splunk-Inbound application splunk
+set rulebase security rules Splunk-Inbound application web-browsing
+set rulebase security rules Splunk-Inbound application ssl
+set rulebase security rules Splunk-Inbound application dns-base
+set rulebase security rules Splunk-Inbound application ntp-base
+set rulebase security rules Splunk-Internal-Logging from Internal to Public source 172.20.240.20 destination 172.20.241.20 application syslog action allow
+set service Splunk-1514 protocol udp port 1514
+set service Splunk-1514 protocol tcp port 1514
+set rulebase security rules Splunk-Internal-Logging service Splunk-1514
+set rulebase security rules Splunk-Internal-Logging log-start yes log-end yes
+# Create Service for Syslog (1514)
+set rulebase security rules Splunk-User-1514 from User to Public source 172.20.242.10 destination 172.20.241.20 application syslog action allow
+set service Syslog-1514 protocol tcp port 1514
+set service Syslog-1514 protocol udp port 1514
+set rulebase security rules Splunk-User-1514 service Syslog-1514
+set rulebase security rules Splunk-User-1514 log-start yes log-end yes
+set rulebase security rules Splunk-User-9998 from User to Public source 172.20.242.200 destination 172.20.241.20 application splunk action allow
+set service Splunk-9998 protocol tcp port 9998
+set rulebase security rules Splunk-User-9998 service Splunk-9998
+set rulebase security rules Splunk-User-9998 log-start yes log-end yes
+#Internal Splunk setup
+set rulebase security rules Splunk-Int from Public to Public source 172.20.242.10 destination 172.20.241.20 application syslog action allow
+set rulebase security rules Splunk-Int from Public to Public source 172.20.241.30 destination 172.20.241.20 application syslog action allow
+set rulebase security rules Splunk-Int from Public to Public source 172.20.241.40 destination 172.20.241.20 application syslog action allow
+set service Splunk-1514 protocol udp port 1514
+set service Splunk-1514 protocol tcp port 1514
+set rulebase security rules Splunk-Int service Splunk-1514
+set rulebase security rules Splunk-Int log-start yes log-end yes
+
+
+# Palo Outbound 
+set rulebase security rules PaloOut from User to External source 172.20.242.153 destination any application dns-base service application-default action allow log-start yes log-end yes
+set rulebase security rules PaloOut from User to External source 172.20.242.153 destination any application web-browsing service application-default action allow log-start yes log-end yes
+set rulebase security rules PaloOut from User to External source 172.20.242.153 destination any application ssl service application-default action allow log-start yes log-end yes
+set rulebase security rules PaloOut from User to External source 172.20.242.153 destination any application ntp-base service application-default action allow log-start yes log-end yes
+# Palo Inbound
+set rulebase security rules PaloIn from External to User source any destination 172.20.242.153 application dns-base service application-default action allow log-start yes log-end yes
+set rulebase security rules PaloIn to User source any destination 172.20.242.153 application web-browsing service application-default action allow log-start yes log-end yes
+set rulebase security rules PaloIn from External to User source any destination 172.20.242.153 application ssl service application-default action allow log-start yes log-end yes
+set rulebase security rules PaloIn from External to User source any destination 172.20.242.153 application ntp-base service application-default action allow log-start yes log-end yes
+
+set rulebase security rules Allow-GitHub from User to External source any destination any application github service application-default action allow log-start yes log-end yes
+set rulebase security rules Allow-GitHub from Internal to External source any destination any application github service application-default action allow log-start yes log-end yes
+set rulebase security rules Allow-GitHub from Public to External source any destination any application github service application-default action allow log-start yes log-end yes
+
+set rulebase security rules Deny-All from any to any source any destination any application any service any action deny log-start yes log-end yes
+
+commit
+
+
