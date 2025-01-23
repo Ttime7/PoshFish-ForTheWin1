@@ -1,0 +1,115 @@
+#basic script
+
+set deviceconfig system permitted-ip 172.20.242.0/24
+
+#restict managment access 
+set network profiles interface-management-profile Default ping no https yes ssh yes telnet no http no snmp no response-pages no
+set network profiles interface-management-profile Default permitted-ip 172.20.242.0/24
+
+set profile-group ProFilter file-blocking "strict file blocking" spyware default url-filtering default virus default vulnerability default wildfire-analysis default
+
+
+
+###############################################################################
+#  Packet-based protections (single-line toggles) 
+###############################################################################
+set network profiles zone-protection-profile ZoneRulz discard-tcp-synack-with-data yes
+set network profiles zone-protection-profile ZoneRulz discard-timestamp yes
+set network profiles zone-protection-profile ZoneRulz discard-unknown-option yes
+set network profiles zone-protection-profile ZoneRulz remove-tcp-timestamp yes
+set network profiles zone-protection-profile ZoneRulz strict-ip-check yes
+set network profiles zone-protection-profile ZoneRulz strip-mptcp-option yes
+set network profiles zone-protection-profile ZoneRulz strip-tcp-fast-open-and-data yes
+set network profiles zone-protection-profile ZoneRulz suppress-icmp-needfrag yes
+set network profiles zone-protection-profile ZoneRulz suppress-icmp-timeexceeded yes
+set network profiles zone-protection-profile ZoneRulz tcp-reject-non-syn yes
+
+
+# TCP SYN Flood: single‐line creation
+set network profiles zone-protection-profile ZoneRulz flood tcp-syn enable yes red activate-rate 10000 alarm-rate 10000 maximal-rate 10000
+# UDP Flood: single‐line creation
+set network profiles zone-protection-profile ZoneRulz flood udp enable yes red activate-rate 10000 alarm-rate 10000 maximal-rate 10000
+# ICMP Flood: single‐line creation
+set network profiles zone-protection-profile ZoneRulz flood icmp enable yes red activate-rate 10000 alarm-rate 10000 maximal-rate 10000
+# Other-IP Flood: single‐line creation
+set network profiles zone-protection-profile ZoneRulz flood other-ip enable yes red  activate-rate 10000 alarm-rate 10000 maximal-rate 10000
+#ip6
+set network profiles zone-protection-profile ZoneRulz flood icmpv6 enable yes red alarm-rate 1000 activate-rate 2000 maximal-rate 3000
+
+set rulebase security rules AllowScoring profile-setting group ProFilter
+set rulebase security rules AllowScoring from any to any source any destination any application [ dns ssl web-browsing ] action allow service application-default log-start yes log-end yes
+
+set rulebase security rules WebMail-Inbound profile-setting group ProFilter
+#set rulebase security rules WebMail-Inbound from [ External Public ] to [ Public External ] source any destination 10.100.1.58 action allow service application-default
+set rulebase security rules WebMail-Inbound from [ External Public ] to [ Public External ] source any destination 172.25.20.8.39 action allow service application-default
+#set rulebase security rules WebMail-Inbound from [ External Public ] to [ Public External ] source any destination any action allow service application-default
+
+# Create WebMail-Inbound Rule
+set rulebase security rules WebMail-Inbound application [ dns web-browsing ssl smtp pop3 imap ] log-start yes log-end yes
+# Create WebMail-Outbound Rule
+set rulebase security rules WebMail-Out profile-setting group ProFilter
+set rulebase security rules WebMail-Out from Public to External source 172.20.241.40 destination any action allow service application-default
+set rulebase security rules WebMail-Out application [ dns web-browsing ssl smtp pop3 imap ] log-start yes log-end yes
+
+
+#DNS out
+set service RNDC protocol tcp port 953
+set service RNDC protocol udp port 953
+set rulebase security rules Allow-RNDC from Internal to External source 172.20.240.20 destination any application any service RNDC action allow log-start yes log-end yes
+set rulebase security rules Allow-RNDC from Internal to External source 172.20.240.20 destination any application any service RNDC action allow log-start yes log-end yes
+set rulebase security rules Allow-RNDC profile-setting group ProFilter
+set rulebase security rules NTP-Out from Internal to External source 172.20.240.20 destination any application ntp action allow service application-default log-start yes log-end yes
+set rulebase security rules NTP-Out profile-setting group ProFilter
+#Splunk Int 
+set rulebase security rules Splunk-Internal-Logging from [ Internal User Public ] to Public source [ 172.20.242.10 172.20.240.20 172.20.241.30 172.20.241.40 172.20.242.150 ] destination 172.20.241.20 application any action allow
+set service Splunk-1514 protocol udp port 1514
+set service Splunk-1514 protocol tcp port 1514
+set rulebase security rules Splunk-Internal-Logging service Splunk-1514 log-start yes log-end yes
+set rulebase security rules Splunk-User-9998 from User to Public source 172.20.242.200 destination 172.20.241.20 application splunk action allow
+set service Splunk-9998 protocol tcp port 9998
+set rulebase security rules Splunk-User-9998 service Splunk-9998
+set rulebase security rules Splunk-User-9998 log-start yes log-end yes
+set rulebase security rules PaloOut from User to External source 172.20.242.153 destination any application [ dns web-browsing ssl ] service application-default action allow log-start yes log-end yes
+set rulebase security rules PaloGUI from User to User source 172.20.242.153 destination [ 172.20.242.150 172.20.242.254 ] application [ ssh ] service application-default action allow log-start yes log-end yes
+
+set rulebase security rules PaloOutUpdate from User to External source 172.20.242.150 destination any application [ pan-db-cloud paloalto-updates paloalto-wildfire-cloud ] service application-default action allow log-start yes log-end yes
+
+set rulebase security rules Allow-File from [ Internal User Public ] to External source any destination any application [ github apt-get google-base yum ] service application-default action allow log-start yes log-end yes
+
+# TEST IN pracTICe
+set rulebase security rules Deny-ICMP-Team8-Core from any to any source any destination 172.31.28.1 application ping service application-default action deny log-start yes log-end yes
+set rulebase security rules Allow-ICMP-Global from any to any source any destination any application ping action allow service application-default log-start yes log-end yes
+set rulebase security rules Deny-All from any to any source any destination any application any service any action deny log-start yes log-end yes
+request anti-virus upgrade install version latest
+request wildfire upgrade install version latest
+request content upgrade install version latest
+
+
+set rulebase security rules Deny-All from any to any source any destination any application any service any action deny log-start yes log-end yes
+# Commit your change
+
+
+##
+##
+commit
+##
+##
+set zone External network zone-protection-profile ZoneRulz
+set zone Internal network zone-protection-profile ZoneRulz
+set zone Public network zone-protection-profile ZoneRulz
+set zone User network zone-protection-profile ZoneRulz
+
+commit
+
+#add this to the top 
+
+set rulebase security rules BlockBad from any to any source any destination any application [ telnet ms-rdp vnc ftp tftp snmp ms-ds-smb rpc ms-rdp http-proxy ssh ] action deny service application-default log-start yes log-end yes
+
+
+
+
+
+wget -q -O google-chrome-stable.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt update
+sudo apt install -y ./google-chrome-stable.deb
+rm google-chrome-stable.deb
